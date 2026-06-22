@@ -712,44 +712,56 @@ canvas.addEventListener('click',()=>{
   if(gameOver) resetGame();
 });
 
-// ===================== ZOOM LOCK (iOS Safari nuclear) =====================
+// ===================== ZOOM LOCK =====================
+// iOS Safari 16+ ignores user-scalable=no for accessibility.
+// Strategy: zoom-tolerant design — make #wrap always fill the VISIBLE viewport.
+// When user zooms in, the game element re-fits instantly so it looks unchanged.
+
 const _vp = document.querySelector('meta[name=viewport]');
 const _vpContent = _vp.content;
+const _wrap = document.getElementById('wrap');
 
-function _resetZoom(){
-  // Meta toggle trick — forces Safari to snap back to scale=1
-  _vp.content = 'width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no';
-  requestAnimationFrame(()=>{ _vp.content = _vpContent; });
+function _lockToViewport(){
+  const vv = window.visualViewport;
+  if(!vv) return;
+  // vv.width/height = logical dimensions of the currently VISIBLE area.
+  // Setting #wrap to these dimensions (+ vv.offsetLeft/Top for scroll)
+  // makes the game always fill exactly what the user sees, zoom or not.
+  _wrap.style.position = 'fixed';
+  _wrap.style.left   = vv.offsetLeft + 'px';
+  _wrap.style.top    = vv.offsetTop  + 'px';
+  _wrap.style.width  = vv.width  + 'px';
+  _wrap.style.height = vv.height + 'px';
+  // Also try to snap zoom back to 1 via meta toggle
+  if(vv.scale > 1.02){
+    _vp.content = 'width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no';
+    setTimeout(()=>{ _vp.content = _vpContent; }, 80);
+  }
 }
 
-// Block all multi-touch and gesture events
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', _lockToViewport);
+  window.visualViewport.addEventListener('scroll', _lockToViewport);
+  _lockToViewport();
+}
+
+// Secondary: block multi-touch gestures before they start
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>
-  document.addEventListener(ev, e=>{ e.preventDefault(); _resetZoom(); }, {passive:false})
+  document.addEventListener(ev, e=>e.preventDefault(), {passive:false})
 );
 document.addEventListener('touchmove', e=>{
-  if(e.touches.length>1){ e.preventDefault(); _resetZoom(); }
+  if(e.touches.length > 1) e.preventDefault();
 }, {passive:false});
 document.addEventListener('touchstart', e=>{
-  if(e.touches.length>1){ e.preventDefault(); }
+  if(e.touches.length > 1) e.preventDefault();
 }, {passive:false});
-
-// Double-tap block
+// Block double-tap zoom
 let _lastTap=0;
 document.addEventListener('touchend', e=>{
   const now=Date.now();
-  if(now-_lastTap<320){ e.preventDefault(); _resetZoom(); }
+  if(now-_lastTap < 300) e.preventDefault();
   _lastTap=now;
 }, {passive:false});
-
-// visualViewport — detect if zoom slipped through and immediately undo it
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', ()=>{
-    if(window.visualViewport.scale > 1.01) _resetZoom();
-  });
-  window.visualViewport.addEventListener('scroll', ()=>{
-    if(window.visualViewport.scale > 1.01) _resetZoom();
-  });
-}
 </script>
 </body>
 </html>
