@@ -554,8 +554,8 @@ function startFight(){
   p1=new Char(CHARS[selP1],220,true);
   p2=new Char(CHARS[selP2],800,false);
   gameOver=false; winner='';
-  document.getElementById('ui').style.display='';
-  document.getElementById('dbg-toggle').style.display='';
+  document.getElementById('ui').style.display='block';
+  document.getElementById('dbg-toggle').style.display='block';
   if(dbgOpen) buildDebug();
 }
 
