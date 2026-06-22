@@ -127,7 +127,7 @@ const CHARS=[
     ],fps:9,loop:false,atk:{reach:280,oy:-120,oh:80,dmg:18}},
     tentacle_blast:{f:[
       {x:512,y:539,w:466,h:161}
-    ],fps:6,loop:false,atk:{reach:320,oy:-130,oh:105,dmg:22}},
+    ],fps:6,loop:false,maxDW:380,atk:{reach:320,oy:-130,oh:105,dmg:22}},
     combo:{f:[
       {x:14,y:357,w:160,h:173},{x:190,y:357,w:148,h:173},
       {x:1007,y:539,w:156,h:161},{x:1170,y:539,w:112,h:161},
@@ -136,7 +136,7 @@ const CHARS=[
     special:{f:[
       {x:14,y:711,w:645,h:353},{x:670,y:711,w:473,h:353},
       {x:1159,y:711,w:283,h:353}
-    ],fps:7,loop:false,atk:{reach:420,oy:-340,oh:300,dmg:35}},
+    ],fps:10,loop:false,maxDW:480,atk:{reach:420,oy:-340,oh:300,dmg:35}},
   }
 },
 {
@@ -184,7 +184,7 @@ const CHARS=[
     special:{f:[
       {x:6,y:167,w:116,h:294},{x:133,y:167,w:338,h:294},
       {x:473,y:167,w:118,h:294},{x:593,y:167,w:846,h:294}
-    ],fps:7,loop:false,atk:{reach:540,oy:-285,oh:250,dmg:38}},
+    ],fps:10,loop:false,maxDW:480,atk:{reach:480,oy:-270,oh:230,dmg:38}},
     ultimate:{f:[
       {x:11,y:919,w:124,h:154},{x:152,y:919,w:134,h:154},
       {x:309,y:919,w:117,h:154},{x:437,y:919,w:147,h:154},
@@ -308,7 +308,10 @@ class Char{
   draw(ctx){
     if(!this.rdy) return;
     const f=this.frame, sc=this.def.sc;
-    const dw=f.w*sc, dh=f.h*sc;
+    const a=this.anim;
+    let dw=f.w*sc, dh=f.h*sc;
+    // Cap display size for wide attack frames so they don't flood the screen
+    if(a.maxDW && dw>a.maxDW){ const r=a.maxDW/dw; dw=a.maxDW; dh*=r; }
     const dx=this.x-dw/2, dy=this.y-dh;
     ctx.save();
     if(!this.fr){
