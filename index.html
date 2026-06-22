@@ -3,13 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>HeroFight</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;}
-body{width:100vw;height:100vh;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;touch-action:none;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;}
+body{display:flex;align-items:center;justify-content:center;}
 #wrap{position:relative;width:100vw;height:100vh;}
 #gc{position:absolute;top:0;left:0;width:100%;height:100%;}
-#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+#ui{
+  position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;
+  padding-bottom:max(env(safe-area-inset-bottom,0px),16px);
+  padding-left:env(safe-area-inset-left,0px);
+  padding-right:env(safe-area-inset-right,0px);
+}
+/* Landscape-only — show rotation notice in portrait */
+#rotate-msg{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:#000;color:#9933ff;
+  flex-direction:column;align-items:center;justify-content:center;
+  font:bold 26px Arial,sans-serif;gap:20px;text-align:center;padding:30px;
+}
+#rotate-msg span{font-size:64px;}
+@media (orientation:portrait){
+  #wrap{display:none;}
+  #rotate-msg{display:flex;}
+}
 .cb{
   position:absolute;pointer-events:auto;
   border-radius:50%;border:2px solid rgba(255,255,255,0.35);
@@ -47,15 +67,18 @@ body{width:100vw;height:100vh;overflow:hidden;background:#000;display:flex;align
 .dbtn:active{background:rgba(100,0,200,0.7);}
 .dbtn.p2{border-color:#885533;color:#ffbb88;}
 #dbg-toggle{
-  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-  background:rgba(0,0,0,0.5);border:1px solid #444;border-bottom:none;
-  color:#666;font-size:11px;font-family:monospace;padding:3px 12px;
-  border-radius:6px 6px 0 0;cursor:pointer;pointer-events:auto;z-index:10;
+  position:absolute;
+  bottom:max(env(safe-area-inset-bottom,0px),16px);
+  left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.55);border:1px solid #444;
+  color:#666;font-size:11px;font-family:monospace;padding:4px 14px;
+  border-radius:6px;cursor:pointer;pointer-events:auto;z-index:10;
 }
 #dbg{display:none;}
 </style>
 </head>
 <body>
+<div id="rotate-msg"><span>🔄</span>Поверни устройство горизонтально</div>
 <div id="wrap">
   <canvas id="gc"></canvas>
   <div id="ui"></div>
@@ -573,32 +596,34 @@ function btn(label,cls,styles,onDown,onUp){
 
 function makeControls(inpRef, side){
   const L=side==='left';
-  const bsz='58px';
-  const bsz2='66px';
-  const bot='8px';
+  const bs='60px';    // normal button size
+  const r1='108px';   // bottom: row 1 (lower)  — safe above home bar
+  const r2='178px';   // bottom: row 2 (upper)
 
-  // D-pad positions
   if(L){
-    // Left player: dpad bottom-left, attacks to the right of dpad
-    btn('←','cb dir',{left:'12px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.left=true,()=>inpRef.left=false);
-    btn('→','cb dir',{left:'82px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.right=true,()=>inpRef.right=false);
-    btn('↑','cb dir',{left:'47px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.up=true,()=>inpRef.up=false);
-    // Attacks
-    btn('A','cb atk-a',{left:'165px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.a=true,()=>inpRef.a=false);
-    btn('B','cb atk-b',{left:'233px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.b=true,()=>inpRef.b=false);
-    btn('C','cb atk-c',{left:'165px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.c=true,()=>inpRef.c=false);
-    btn('D','cb atk-d',{left:'233px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.d=true,()=>inpRef.d=false);
-    btn('X\n★','cb atk-x',{left:'200px',bottom:'8px',width:'66px',height:'66px'},()=>inpRef.x=true,()=>inpRef.x=false);
+    // D-pad
+    btn('←','cb dir',{left:'14px', bottom:r1,width:bs,height:bs},()=>inpRef.left=true, ()=>inpRef.left=false);
+    btn('→','cb dir',{left:'84px', bottom:r1,width:bs,height:bs},()=>inpRef.right=true,()=>inpRef.right=false);
+    btn('↑','cb dir',{left:'49px', bottom:r2,width:bs,height:bs},()=>inpRef.up=true,   ()=>inpRef.up=false);
+    // Special (★) — between dpad and attack grid, clearly visible
+    btn('★','cb atk-x',{left:'158px',bottom:r1,width:'68px',height:'68px'},()=>inpRef.x=true,()=>inpRef.x=false);
+    // Attack grid
+    btn('A','cb atk-a',{left:'244px',bottom:r2,width:bs,height:bs},()=>inpRef.a=true,()=>inpRef.a=false);
+    btn('B','cb atk-b',{left:'314px',bottom:r2,width:bs,height:bs},()=>inpRef.b=true,()=>inpRef.b=false);
+    btn('C','cb atk-c',{left:'244px',bottom:r1,width:bs,height:bs},()=>inpRef.c=true,()=>inpRef.c=false);
+    btn('D','cb atk-d',{left:'314px',bottom:r1,width:bs,height:bs},()=>inpRef.d=true,()=>inpRef.d=false);
   } else {
-    // Right player: dpad bottom-right, attacks to the left of dpad
-    btn('→','cb dir',{right:'12px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.right=true,()=>inpRef.right=false);
-    btn('←','cb dir',{right:'82px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.left=true,()=>inpRef.left=false);
-    btn('↑','cb dir',{right:'47px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.up=true,()=>inpRef.up=false);
-    btn('A','cb atk-a',{right:'165px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.a=true,()=>inpRef.a=false);
-    btn('B','cb atk-b',{right:'233px',bottom:'142px',width:bsz,height:bsz},()=>inpRef.b=true,()=>inpRef.b=false);
-    btn('C','cb atk-c',{right:'165px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.c=true,()=>inpRef.c=false);
-    btn('D','cb atk-d',{right:'233px',bottom:'76px',width:bsz,height:bsz},()=>inpRef.d=true,()=>inpRef.d=false);
-    btn('X\n★','cb atk-x',{right:'200px',bottom:'8px',width:'66px',height:'66px'},()=>inpRef.x=true,()=>inpRef.x=false);
+    // D-pad
+    btn('→','cb dir',{right:'14px', bottom:r1,width:bs,height:bs},()=>inpRef.right=true,()=>inpRef.right=false);
+    btn('←','cb dir',{right:'84px', bottom:r1,width:bs,height:bs},()=>inpRef.left=true, ()=>inpRef.left=false);
+    btn('↑','cb dir',{right:'49px', bottom:r2,width:bs,height:bs},()=>inpRef.up=true,   ()=>inpRef.up=false);
+    // Special (★)
+    btn('★','cb atk-x',{right:'158px',bottom:r1,width:'68px',height:'68px'},()=>inpRef.x=true,()=>inpRef.x=false);
+    // Attack grid
+    btn('A','cb atk-a',{right:'244px',bottom:r2,width:bs,height:bs},()=>inpRef.a=true,()=>inpRef.a=false);
+    btn('B','cb atk-b',{right:'314px',bottom:r2,width:bs,height:bs},()=>inpRef.b=true,()=>inpRef.b=false);
+    btn('C','cb atk-c',{right:'244px',bottom:r1,width:bs,height:bs},()=>inpRef.c=true,()=>inpRef.c=false);
+    btn('D','cb atk-d',{right:'314px',bottom:r1,width:bs,height:bs},()=>inpRef.d=true,()=>inpRef.d=false);
   }
 }
 
@@ -684,20 +709,44 @@ canvas.addEventListener('click',()=>{
   if(gameOver) resetGame();
 });
 
-// Prevent all zoom gestures (iOS Safari ignores user-scalable=no)
-document.addEventListener('gesturestart', e=>e.preventDefault(), {passive:false});
-document.addEventListener('gesturechange', e=>e.preventDefault(), {passive:false});
-document.addEventListener('gestureend', e=>e.preventDefault(), {passive:false});
+// ===================== ZOOM LOCK (iOS Safari nuclear) =====================
+const _vp = document.querySelector('meta[name=viewport]');
+const _vpContent = _vp.content;
+
+function _resetZoom(){
+  // Meta toggle trick — forces Safari to snap back to scale=1
+  _vp.content = 'width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no';
+  requestAnimationFrame(()=>{ _vp.content = _vpContent; });
+}
+
+// Block all multi-touch and gesture events
+['gesturestart','gesturechange','gestureend'].forEach(ev=>
+  document.addEventListener(ev, e=>{ e.preventDefault(); _resetZoom(); }, {passive:false})
+);
 document.addEventListener('touchmove', e=>{
-  if(e.touches.length>1 || (e.scale&&e.scale!==1)) e.preventDefault();
+  if(e.touches.length>1){ e.preventDefault(); _resetZoom(); }
 }, {passive:false});
-// Block double-tap zoom via fast consecutive taps
-let lastTap=0;
+document.addEventListener('touchstart', e=>{
+  if(e.touches.length>1){ e.preventDefault(); }
+}, {passive:false});
+
+// Double-tap block
+let _lastTap=0;
 document.addEventListener('touchend', e=>{
   const now=Date.now();
-  if(now-lastTap<300) e.preventDefault();
-  lastTap=now;
+  if(now-_lastTap<320){ e.preventDefault(); _resetZoom(); }
+  _lastTap=now;
 }, {passive:false});
+
+// visualViewport — detect if zoom slipped through and immediately undo it
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', ()=>{
+    if(window.visualViewport.scale > 1.01) _resetZoom();
+  });
+  window.visualViewport.addEventListener('scroll', ()=>{
+    if(window.visualViewport.scale > 1.01) _resetZoom();
+  });
+}
 </script>
 </body>
 </html>
